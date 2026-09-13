@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.4</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.carbonlink</groupId>
+    <artifactId>carbonlink-backend</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>carbonlink-backend</name>
+    <description>CarbonLink - Carbon Capture-to-Product Matchmaking Platform</description>
+
+    <properties>
+        <java.version>17</java.version>
+
+        <!-- Spring Boot 3.3.4 pins Byte Buddy 1.14.19 / Mockito 5.11.0, which cannot instrument
+             classes on JDK 24+. Every mock-based test errors out with "Could not modify all
+             classes" on a modern JDK, and Hibernate's own proxy generation sits on the same
+             library at runtime. Pinned forward here so the build works on whatever JDK the
+             machine happens to have (17 through 26) without needing a specific JDK installed. -->
+        <byte-buddy.version>1.17.6</byte-buddy.version>
+        <mockito.version>5.18.0</mockito.version>
+
+        <!-- Same story for Lombok: the pinned 1.18.34 silently generates NOTHING on JDK 24+,
+             so `mvn clean package` failed outright with "cannot find symbol" on every getter
+             (annotation processing runs, emits no code, and javac then can't resolve
+             getId/getStatus/...). Incremental builds masked it by linking against
+             already-compiled classes; a clean build did not. -->
+        <lombok.version>1.18.42</lombok.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- BCrypt for demo account passwords. Deliberately the standalone crypto artifact,
+             not spring-boot-starter-security: the starter installs a servlet filter chain that
+             would secure every endpoint by default and break the whole app. -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- From JDK 23 on, javac no longer runs annotation processors it merely finds on
+                 the classpath (JEP 456); it needs to be told to. Without this, Lombok silently
+                 generates nothing and a clean build dies with "cannot find symbol: method
+                 getId()" on every entity. Declaring Lombok as an explicit processor path (and
+                 asking for full processing) makes the build work the same way on JDK 17 and on
+                 JDK 26, rather than depending on which JDK happens to be installed. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <proc>full</proc>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
