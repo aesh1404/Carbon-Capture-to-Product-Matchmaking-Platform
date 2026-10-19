@@ -23,14 +23,16 @@ public class DatabaseUrlEnvironmentPostProcessor implements EnvironmentPostProce
         String databaseUrl = firstNonBlank(
                 environment.getProperty("DATABASE_URL"),
                 System.getenv("DATABASE_URL"));
-        if (databaseUrl == null) {
+        if (databaseUrl == null || databaseUrl.isBlank()) {
             return;
         }
-
+        databaseUrl = databaseUrl.trim();
         Map<String, Object> props = new HashMap<>();
+
         if (databaseUrl.startsWith("jdbc:")) {
             props.put("spring.datasource.url", databaseUrl);
             environment.getPropertySources().addFirst(new MapPropertySource("databaseUrl", props));
+            System.out.println("[DatabaseUrlEnvironmentPostProcessor] Using raw JDBC URL from DATABASE_URL");
             return;
         }
 
@@ -38,38 +40,103 @@ public class DatabaseUrlEnvironmentPostProcessor implements EnvironmentPostProce
             return;
         }
 
-        URI uri = URI.create(databaseUrl);
-        String userInfo = uri.getUserInfo();
-        if (userInfo == null || uri.getHost() == null) {
-            return;
-        }
+        try {
+            // Robust parsing without java.net.URI limitations (handles underscores in host, special chars in password)
+            int schemeEnd = databaseUrl.indexOf("://");
+            String afterScheme = databaseUrl.substring(schemeEnd + 3);
 
-        int colon = userInfo.indexOf(':');
-        String username = colon >= 0 ? decode(userInfo.substring(0, colon)) : decode(userInfo);
-        String password = colon >= 0 ? decode(userInfo.substring(colon + 1)) : "";
-        int port = uri.getPort() == -1 ? 5432 : uri.getPort();
-        String path = uri.getPath();
-        if (path == null || path.isBlank() || "/".equals(path)) {
-            path = "/carbonlink";
-        }
+            String userInfo = null;
+            String hostAndRest = afterScheme;
 
-        String jdbc = "jdbc:postgresql://" + uri.getHost() + ":" + port + path;
-        String query = uri.getQuery();
-        if (query == null || query.isBlank()) {
-            // prefer: TLS when the host offers it (Render/Neon), plain TCP for local Docker.
-            jdbc += "?sslmode=prefer";
-        } else {
-            jdbc += "?" + query;
-            if (!query.contains("sslmode=")) {
-                jdbc += "&sslmode=prefer";
+            int atIndex = afterScheme.lastIndexOf('@');
+            if (atIndex != -1) {
+                userInfo = afterScheme.substring(0, atIndex);
+                hostAndRest = afterScheme.substring(atIndex + 1);
             }
-        }
 
-        props.put("spring.datasource.url", jdbc);
-        props.put("spring.datasource.username", username);
-        props.put("spring.datasource.password", password);
-        props.put("spring.datasource.driver-class-name", "org.postgresql.Driver");
-        environment.getPropertySources().addFirst(new MapPropertySource("databaseUrl", props));
+            String username = "postgres";
+            String password = "";
+            if (userInfo != null) {
+                int colon = userInfo.indexOf(':');
+                if (colon >= 0) {
+                    username = decode(userInfo.substring(0, colon));
+                    password = decode(userInfo.substring(colon + 1));
+                } else {
+                    username = decode(userInfo);
+                }
+            }
+
+            // Extract host, port, path, query
+            String hostPort;
+            String pathQuery = "";
+            int slashIndex = hostAndRest.indexOf('/');
+            int questionIndex = hostAndRest.indexOf('?');
+
+            int splitPoint = -1;
+            if (slashIndex != -1) {
+                splitPoint = slashIndex;
+            } else if (questionIndex != -1) {
+                splitPoint = questionIndex;
+            }
+
+            if (splitPoint != -1) {
+                hostPort = hostAndRest.substring(0, splitPoint);
+                pathQuery = hostAndRest.substring(splitPoint);
+            } else {
+                hostPort = hostAndRest;
+            }
+
+            String host = hostPort;
+            int port = 5432;
+            int portColon = hostPort.lastIndexOf(':');
+            if (portColon != -1) {
+                host = hostPort.substring(0, portColon);
+                try {
+                    port = Integer.parseInt(hostPort.substring(portColon + 1));
+                } catch (NumberFormatException ignored) {}
+            }
+
+            String path = "/carbonlink";
+            String query = "";
+            if (!pathQuery.isEmpty()) {
+                int qIdx = pathQuery.indexOf('?');
+                if (qIdx != -1) {
+                    path = pathQuery.substring(0, qIdx);
+                    query = pathQuery.substring(qIdx + 1);
+                } else {
+                    path = pathQuery;
+                }
+            }
+            if (path.isEmpty() || "/".equals(path)) {
+                path = "/carbonlink";
+            }
+            if (!path.startsWith("/")) {
+                path = "/" + path;
+            }
+
+            String jdbc = "jdbc:postgresql://" + host + ":" + port + path;
+            if (query.isEmpty()) {
+                jdbc += "?sslmode=prefer";
+            } else {
+                jdbc += "?" + query;
+                if (!query.contains("sslmode=")) {
+                    jdbc += "&sslmode=prefer";
+                }
+            }
+
+            props.put("spring.datasource.url", jdbc);
+            props.put("spring.datasource.username", username);
+            props.put("spring.datasource.password", password);
+            props.put("spring.datasource.driver-class-name", "org.postgresql.Driver");
+            environment.getPropertySources().addFirst(new MapPropertySource("databaseUrl", props));
+
+            System.out.println("[DatabaseUrlEnvironmentPostProcessor] Configured DataSource -> "
+                    + "host=" + host + ", port=" + port + ", database=" + path + ", user=" + username
+                    + " (JDBC URL: " + jdbc + ")");
+        } catch (Exception e) {
+            System.err.println("[DatabaseUrlEnvironmentPostProcessor] Failed to parse DATABASE_URL: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     private static String firstNonBlank(String a, String b) {
@@ -83,6 +150,10 @@ public class DatabaseUrlEnvironmentPostProcessor implements EnvironmentPostProce
     }
 
     private static String decode(String value) {
-        return URLDecoder.decode(value, StandardCharsets.UTF_8);
+        try {
+            return URLDecoder.decode(value, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            return value;
+        }
     }
 }
