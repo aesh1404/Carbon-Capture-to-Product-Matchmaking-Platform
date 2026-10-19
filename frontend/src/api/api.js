@@ -1,9 +1,7 @@
 import axios from 'axios'
 
 const client = axios.create({
-  // Same-origin `/api` in production (the JAR serves the built UI). Local Vite proxies
-  // `/api` to :8080. Set VITE_API_URL only if the API is hosted on a different origin.
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: import.meta.env.VITE_API_URL || 'https://carbonlink-81xy.onrender.com/api',
   headers: { 'Content-Type': 'application/json' },
 })
 
