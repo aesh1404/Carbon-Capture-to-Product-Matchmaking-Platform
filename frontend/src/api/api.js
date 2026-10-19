@@ -21,8 +21,19 @@ export function login(payload) {
   return unwrap(client.post('/auth/login', payload))
 }
 
+export const DEFAULT_CITIES = [
+  'Ahmedabad', 'Bangalore', 'Bhopal', 'Chandigarh', 'Chennai',
+  'Coimbatore', 'Delhi', 'Guwahati', 'Hyderabad', 'Indore',
+  'Jaipur', 'Jamshedpur', 'Kanpur', 'Kochi', 'Kolkata',
+  'Lucknow', 'Mumbai', 'Nagpur', 'Nashik', 'Pune',
+  'Surat', 'Vadodara', 'Visakhapatnam'
+]
+
 export function getCities() {
-  return unwrap(client.get('/cities'))
+  return client
+    .get('/cities')
+    .then((res) => (Array.isArray(res.data) && res.data.length > 0 ? res.data : DEFAULT_CITIES))
+    .catch(() => DEFAULT_CITIES)
 }
 
 export function getUser(id) {

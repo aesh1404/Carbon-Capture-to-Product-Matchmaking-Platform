@@ -28,7 +28,7 @@ public class WebConfig implements WebMvcConfigurer {
             "http://[::1]:[*]"
     };
 
-    @Value("${carbonlink.cors.allowed-origin-patterns:}")
+    @Value("${carbonlink.cors.allowed-origin-patterns:https://*.vercel.app,https://*.onrender.com}")
     private String extraOriginPatterns;
 
     @Override
@@ -42,10 +42,12 @@ public class WebConfig implements WebMvcConfigurer {
                 }
             }
         }
-        registry.addMapping("/api/**")
+        registry.addMapping("/**")
                 .allowedOriginPatterns(patterns.toArray(String[]::new))
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*");
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH")
+                .allowedHeaders("*")
+                .allowCredentials(true)
+                .maxAge(3600);
     }
 
 }
