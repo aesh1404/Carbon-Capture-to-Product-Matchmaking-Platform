@@ -10,7 +10,8 @@ CarbonLink is a two-sided marketplace connecting carbon **emitters** (who list c
 
 ## Tech Stack
 
-- **Backend**: Java 17 (builds and runs on JDK 17–26), Spring Boot 3.3, Spring Data JPA, H2
+- **Backend**: Java 17 (builds and runs on JDK 17–26), Spring Boot 3.3, Spring Data JPA, PostgreSQL
+- **Hosting**: one Docker image on Render (free) serving the UI and API, plus a free Render Postgres database
 - **Frontend**: React, Tailwind CSS
 - **Distance/Logistics**: OpenRouteService API (with Haversine geometric fallback for resilience/offline capability)
 
@@ -27,7 +28,9 @@ CarbonLink is a two-sided marketplace connecting carbon **emitters** (who list c
 
 ## How to Run
 
-Two pieces to run at once — full details, troubleshooting, and demo-mode notes are in [`RUNNING.md`](./RUNNING.md). Quick version:
+Two pieces to run at once — full details, troubleshooting, demo-mode notes, and **free deployment** are in [`RUNNING.md`](./RUNNING.md). Quick version:
+
+PostgreSQL must be running (database `carbonlink`). Local password is not committed; it lives in gitignored `backend/src/main/resources/application-secret.properties`.
 
 **Backend** (any JDK from 17 to 26 — no specific version needed):
 ```bash
@@ -234,6 +237,10 @@ A buyer opening a receipt passes through a **simulated checkout** (method choice
 2. **[Emitter]** View existing listings, or create a new one
 3. **[Buyer]** Create a request, view ranked matches with compatibility scores and full cost breakdown
 4. Accept or reject a match
+
+## Deploy (free)
+
+See [`RUNNING.md`](./RUNNING.md#4-free-deployment-render) for the Render blueprint (`render.yaml`). After it is live, use that HTTPS URL on your LinkedIn certificate/project — steps are in the same file.
 
 ## Team
 

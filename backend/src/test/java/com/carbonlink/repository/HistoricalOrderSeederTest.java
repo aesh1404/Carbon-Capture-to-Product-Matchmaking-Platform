@@ -6,6 +6,7 @@ import com.carbonlink.entity.Order;
 import com.carbonlink.entity.OrderStatus;
 import com.carbonlink.entity.Role;
 import com.carbonlink.entity.User;
+import com.carbonlink.config.UseEmbeddedPostgres;
 import com.carbonlink.seed.HistoricalOrderSeeder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 // like a real business. These pin the two things that would quietly ruin it: a chart that
 // flattens into a straight line, and history that eats the stock the live demo needs.
 @DataJpaTest
+@UseEmbeddedPostgres
 @Import(HistoricalOrderSeeder.class)
 class HistoricalOrderSeederTest {
 

@@ -69,6 +69,6 @@ Sign in as the buyer in one browser window and the emitter in another (or a priv
 
 ## Security note
 
-These are throwaway credentials for a local, disposable H2 database that is recreated from scratch on every demo run. `123` is chosen to be typed quickly on stage, not to protect anything.
+These are throwaway credentials for the demo-seeded PostgreSQL database. `123` is chosen to be typed quickly on stage, not to protect anything. The seeder only runs on an empty database with the `demo` profile.
 
 Passwords are still stored **BCrypt-hashed**, never in plain text, and the hash is never returned by any API response — a demo shortcut in the *choice of password* shouldn't become a bad pattern in the *code*. A real deployment would need password strength rules, sessions or tokens, and per-endpoint authorization, none of which exist here: sign-in identifies who you are, it does not yet restrict what you can reach.

@@ -1,5 +1,10 @@
 package com.carbonlink.config;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -14,19 +19,31 @@ public class WebConfig implements WebMvcConfigurer {
     // blocked before it left the browser, and axios surfaces that as a bare "Network Error" —
     // indistinguishable, on screen, from the backend simply being down.
     //
-    // Any loopback host on any port is allowed. That's appropriate here: this is a local-only
-    // demo app with no auth and no cookies (allowCredentials is left off), so the origin isn't
-    // carrying any authority worth restricting. A deployed version would pin real origins.
+    // Any loopback host on any port is allowed. Extra patterns come from
+    // CORS_ALLOWED_ORIGIN_PATTERNS for a split frontend host. Same-origin deploys (the JAR
+    // serving the built UI) do not need extra origins.
     private static final String[] LOOPBACK_ORIGIN_PATTERNS = {
             "http://localhost:[*]",
             "http://127.0.0.1:[*]",
             "http://[::1]:[*]"
     };
 
-       @Override
+    @Value("${carbonlink.cors.allowed-origin-patterns:}")
+    private String extraOriginPatterns;
+
+    @Override
     public void addCorsMappings(CorsRegistry registry) {
+        List<String> patterns = new ArrayList<>(Arrays.asList(LOOPBACK_ORIGIN_PATTERNS));
+        if (extraOriginPatterns != null && !extraOriginPatterns.isBlank()) {
+            for (String pattern : extraOriginPatterns.split(",")) {
+                String trimmed = pattern.trim();
+                if (!trimmed.isEmpty()) {
+                    patterns.add(trimmed);
+                }
+            }
+        }
         registry.addMapping("/api/**")
-                .allowedOriginPatterns(LOOPBACK_ORIGIN_PATTERNS)
+                .allowedOriginPatterns(patterns.toArray(String[]::new))
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*");
     }

@@ -1,5 +1,6 @@
 package com.carbonlink.repository;
 
+import com.carbonlink.config.UseEmbeddedPostgres;
 import com.carbonlink.entity.Listing;
 import com.carbonlink.entity.ListingStatus;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 // This has to be a real JPA slice test - a Mockito-based service test can never catch it,
 // because the lost update happens in the database, not in the service logic.
 @DataJpaTest
+@UseEmbeddedPostgres
 class ListingConcurrencyTest {
 
     @Autowired

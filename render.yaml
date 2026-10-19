@@ -1,0 +1,23 @@
+databases:
+  - name: carbonlink-db
+    databaseName: carbonlink
+    user: carbonlink
+    plan: free
+    postgresMajorVersion: "16"
+
+services:
+  - type: web
+    name: carbonlink
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/cities
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: carbonlink-db
+          property: connectionString
+      - key: SPRING_PROFILES_ACTIVE
+        value: demo
+      - key: JAVA_OPTS
+        value: -Xms128m -Xmx384m

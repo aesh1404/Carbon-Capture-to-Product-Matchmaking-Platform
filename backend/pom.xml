@@ -59,9 +59,18 @@
         </dependency>
 
         <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
+        </dependency>
+
+        <!-- Real PostgreSQL for JPA tests (no H2). Uses an isolated embedded server, not the
+             developer's carbonlink database, so tests cannot wipe local data. -->
+        <dependency>
+            <groupId>io.zonky.test</groupId>
+            <artifactId>embedded-database-spring-test</artifactId>
+            <version>2.6.0</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>

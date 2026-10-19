@@ -3,6 +3,7 @@ package com.carbonlink.repository;
 import com.carbonlink.entity.CarbonRequest;
 import com.carbonlink.entity.Listing;
 import com.carbonlink.entity.ListingStatus;
+import com.carbonlink.config.UseEmbeddedPostgres;
 import com.carbonlink.service.DisplayIdService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 // A real JPA slice rather than mocks: the whole point of display numbering is the ORDER rows
 // come back in, which only the database can actually answer.
 @DataJpaTest
+@UseEmbeddedPostgres
 @Import(DisplayIdService.class)
 class DisplayIdServiceTest {
 

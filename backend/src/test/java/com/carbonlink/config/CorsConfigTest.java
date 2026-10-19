@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
@@ -18,11 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 // the backend being down, which sends you debugging the wrong thing entirely.
 @SpringBootTest
 @AutoConfigureMockMvc
-@TestPropertySource(properties = {
-        // Never touch the real file-based database: it runs with AUTO_SERVER=TRUE, so a test
-        // would otherwise attach to whatever dev instance happens to be running.
-        "spring.datasource.url=jdbc:h2:mem:corstest;DB_CLOSE_DELAY=-1"
-})
+@UseEmbeddedPostgres
 class CorsConfigTest {
 
     @Autowired
